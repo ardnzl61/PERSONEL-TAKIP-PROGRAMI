@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#17365d">
+<title>Personel İzin Takip</title>
+<style>
+:root{--navy:#17365d;--blue:#24558a;--bg:#f3f6fb;--text:#182230;--muted:#667085;--line:#dce3ee;--green:#16794b;--amber:#9a6700;--red:#b42318}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+header{background:linear-gradient(130deg,#17365d,#28649b);color:white;padding:22px 18px 18px}header h1{font-size:22px;margin:0 0 5px}header p{margin:0;opacity:.86;font-size:13px}
+main{max-width:1100px;margin:auto;padding:16px}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px}.card{background:white;border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 2px 8px #152a4408}.stat-label{font-size:12px;color:var(--muted)}.stat-num{font-size:26px;font-weight:750;margin-top:5px}
+.nav{display:flex;gap:8px;overflow:auto;margin:0 0 14px}.nav button{white-space:nowrap;border:1px solid var(--line);background:white;color:var(--navy);border-radius:10px;padding:11px 14px;font-weight:650}.nav button.active{background:var(--navy);color:white;border-color:var(--navy)}
+.panel{background:white;border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}.panel h2{font-size:17px;margin:0 0 14px}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row>*{flex:1}.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}.field label{font-size:12px;color:#475467;font-weight:650}.field input,.field select,.field textarea,.search{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;font:inherit;color:inherit;min-width:0}.field textarea{min-height:75px;resize:vertical}
+button{cursor:pointer;font:inherit}.btn{border:0;border-radius:9px;background:var(--blue);color:white;padding:11px 14px;font-weight:650}.btn.secondary{background:#e9eff7;color:var(--navy)}.btn.danger{background:#fff0ef;color:var(--red)}.btn.small{padding:7px 9px;font-size:12px}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:13px;min-width:650px}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:#475467;background:#f8fafc;position:sticky;top:0}
+.badge{display:inline-block;border-radius:20px;padding:4px 8px;font-size:11px;font-weight:700;background:#edf2f7}.badge.Onaylandı,.badge.Tamamlandı{background:#e5f6ec;color:var(--green)}.badge.Beklemede{background:#fff3d6;color:var(--amber)}.badge.Reddedildi{background:#ffebe9;color:var(--red)}
+.hidden{display:none!important}.muted{color:var(--muted);font-size:13px}.empty{padding:24px;text-align:center;color:var(--muted)}.person-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.person{padding:12px;border:1px solid var(--line);border-radius:10px;background:#fff}.person strong{display:block;font-size:13px}.person span{font-size:11px;color:var(--muted)}
+footer{max-width:1100px;margin:auto;padding:0 16px 25px;color:var(--muted);font-size:12px}.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#16283d;color:white;padding:12px 18px;border-radius:10px;display:none;z-index:10;max-width:90%;box-shadow:0 5px 25px #0002}
+@media(max-width:700px){main{padding:11px}.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.stat-num{font-size:23px}.panel{padding:13px}.person-grid{grid-template-columns:repeat(2,minmax(0,1fr))}header{padding:19px 14px}.row{display:block}.row .btn{margin-top:5px;width:100%}}
+</style>
+</head>
+<body>
+<header><h1>Personel İzin Takip</h1><p>Personel kayıtları · İzin talepleri · İzin geçmişi</p></header>
+<main>
+<section class="stats">
+ <div class="card"><div class="stat-label">Kayıtlı personel</div><div class="stat-num" id="statPeople">58</div></div>
+ <div class="card"><div class="stat-label">Toplam izin kaydı</div><div class="stat-num" id="statLeaves">0</div></div>
+ <div class="card"><div class="stat-label">Onay bekleyen</div><div class="stat-num" id="statPending">0</div></div>
+ <div class="card"><div class="stat-label">Onaylı izin günü</div><div class="stat-num" id="statDays">0</div></div>
+</section>
+<nav class="nav">
+<button class="active" data-tab="dashboard">Genel Bakış</button>
+<button data-tab="leaves">İzin Kayıtları</button>
+<button data-tab="people">Personel Listesi</button>
+<button data-tab="backup">Yedekleme</button>
+</nav>
+<section id="dashboard" class="tab">
+ <div class="panel"><h2>Son izin kayıtları</h2><div id="recent"></div></div>
+ <div class="panel"><h2>Hızlı bilgi</h2><p class="muted">İzin kayıtlarını ekledikçe özetler otomatik güncellenir. Bu sürüm kayıtları yalnızca bu tarayıcıda saklar. Telefon değiştirir veya tarayıcı verilerini silerseniz, önce Yedekleme bölümünden dosya indirin.</p></div>
+</section>
+<section id="leaves" class="tab hidden">
+ <div class="panel"><h2 id="formTitle">Yeni izin kaydı</h2>
+ <form id="leaveForm">
+ <input type="hidden" id="editId">
+ <div class="row">
+  <div class="field"><label for="person">Personel</label><select id="person" required></select></div>
+  <div class="field"><label for="type">İzin türü</label><select id="type"><option>Yıllık İzin</option><option>Ücretsiz İzin</option><option>Rapor</option><option>Mazeret İzni</option><option>Diğer</option></select></div>
+ </div>
+ <div class="row">
+  <div class="field"><label for="start">Başlangıç tarihi</label><input id="start" type="date" required></div>
+  <div class="field"><label for="end">Bitiş tarihi</label><input id="end" type="date" required></div>
+  <div class="field"><label for="status">Durum</label><select id="status"><option>Beklemede</option><option>Onaylandı</option><option>Reddedildi</option><option>Tamamlandı</option></select></div>
+ </div>
+ <div class="row">
+  <div class="field"><label for="approver">Onaylayan</label><input id="approver" placeholder="Ad soyad"></div>
+  <div class="field"><label for="notes">Açıklama</label><input id="notes" placeholder="İsteğe bağlı açıklama"></div>
+ </div>
+ <div class="row"><button class="btn" type="submit" id="saveBtn">İzin kaydını kaydet</button><button class="btn secondary" type="button" id="cancelEdit">Temizle / Vazgeç</button></div>
+ <p class="muted">İş günü hesabı hafta sonlarını çıkarır; resmî tatiller otomatik çıkarılmaz. İşe dönüş tarihi bitiş gününden sonraki gün olarak gösterilir.</p>
+ </form></div>
+ <div class="panel"><h2>İzin geçmişi</h2><div class="row" style="margin-bottom:12px"><input id="leaveSearch" class="search" placeholder="Personel veya izin türü ara"><select id="statusFilter" class="search"><option value="">Tüm durumlar</option><option>Beklemede</option><option>Onaylandı</option><option>Reddedildi</option><option>Tamamlandı</option></select></div><div id="leaveTable" class="table-wrap"></div></div>
+</section>
+<section id="people" class="tab hidden">
+ <div class="panel"><h2>Personel listesi</h2><div class="row" style="margin-bottom:12px"><input id="personSearch" class="search" placeholder="İsimle ara"><input id="newPerson" class="search" placeholder="Yeni personel adı soyadı"><button class="btn" id="addPerson">Personel ekle</button></div><div id="peopleList" class="person-grid"></div><p class="muted">Toplam 60 kişilik liste hazırlandı. Gönderdiğiniz 58 isim eklendi; iki boş kontenjana yeni personel ekleyebilirsiniz.</p></div>
+</section>
+<section id="backup" class="tab hidden">
+ <div class="panel"><h2>Veri yedekleme ve geri yükleme</h2><p class="muted">Kayıtlar bu cihazdaki tarayıcıda saklanır; otomatik bulut eşitlemesi yoktur. Düzenli yedek alın.</p><div class="row"><button class="btn" id="export">Yedeği indir (JSON)</button><div class="field"><label for="importFile">Yedek dosyasından geri yükle</label><input id="importFile" type="file" accept=".json,application/json"></div></div><button class="btn danger" id="clearAll">Tüm izin kayıtlarını sil</button></div>
+</section>
+</main>
+<footer>Personel İzin Takip · Yerel tarayıcı sürümü</footer>
+<div id="toast" class="toast"></div>
+<script>
+const initialNames = [
+"CİHAT ARAZ","İLYAS ANAÇ","SALİH ALTIPARMAK","ERTUĞRUL EKİCİ","AZİZ KÖROĞLU","MİRAÇ AKBULUT","FAZLI ÇETİNKAYA","SELAHATTİN YAVUZ","HAKAN BAHRAM","MURAT ALTUN","SAVAŞ KONGUR","MEHMET ÖZTÜRK","UĞUR KUDU","ABDULSAMET BÜLBÜL","ABDULKADİR YAZICI","AHMET CAN DEĞİRMENCİ","EMRE KOLOĞLU","FURKAN GENÇOSMANOĞLU","İSMAİL ÇOLAK",
+"MURAT YAVUZ","HAMİ TEKİN","BAYRAM ERDOĞAN","TUNAHAN NİŞANCI","TOLGAHAN REİS","ÖZGÜR ÖZKAN","ERCAN ŞAHİN","KÖKSAL AYDIN","CİHAT İSKENDER","ABDULLAH GÜLER","HAKTAN AYYILDIZ","SONER YAZICI","FURKAN KAYIKÇI","EMRE ATEŞOĞLU","UFUK UZUNALİ","ALİ YILDIRIM","ORÇUN ALTAY","METİN ADANUR","BÜLENT BULUT",
+"ARDA NAZLI","MURAT ASLAN","ABDUL SAMET DEĞİRMENCİ","NUH KILIÇOĞLU","ÖMER KÖSE","CAFER OĞUL","MUHAMMET YAVUZ","ABDURRAHİM KALHAN","MUHAMMET TAŞÇI","NURGAY AK","EKREM GEZİCİ",
+"NAZMİ AKYÜZ","HASAN KÖROĞLU","ZEYNEL ABİDİN YETİM","SALİH ALKIŞ","HALİL BÜLBÜL","KADİR YÜRÜMEZ","ŞABAN ESER","BARIŞ ÇOLAK","MUSTAFA MARKAL"
+];
+const KEY='personelIzinTakip_v1';
+let data=JSON.parse(localStorage.getItem(KEY)||'null')||{people:initialNames.map((name,i)=>({id:i+1,name})),leaves:[],nextId:1};
+if(data.people.length<60){while(data.people.length<60)data.people.push({id:Date.now()+data.people.length,name:''});}
+function save(){localStorage.setItem(KEY,JSON.stringify(data));renderAll();}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function toast(s){const t=document.getElementById('toast');t.textContent=s;t.style.display='block';setTimeout(()=>t.style.display='none',2600)}
+function days(a,b){if(!a||!b||b<a)return 0;let n=0,d=new Date(a+'T12:00:00'),end=new Date(b+'T12:00:00');while(d<=end){if(d.getDay()!==0&&d.getDay()!==6)n++;d.setDate(d.getDate()+1)}return n}
+function fmt(d){if(!d)return '—';return new Date(d+'T12:00:00').toLocaleDateString('tr-TR')}
+function activeName(id){return data.people.find(p=>String(p.id)===String(id))?.name||'Silinmiş/boş personel'}
+function setTab(id){document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('hidden',x.id!==id));document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.tab===id));}
+document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
+function renderPeople(){
+ const sel=document.getElementById('person');const chosen=sel.value;
+ sel.innerHTML='<option value="">Personel seçin</option>'+data.people.filter(p=>p.name.trim()).map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+ if(chosen)sel.value=chosen;
+ const q=(document.getElementById('personSearch').value||'').toLocaleLowerCase('tr-TR');
+ document.getElementById('peopleList').innerHTML=data.people.filter(p=>p.name.toLocaleLowerCase('tr-TR').includes(q)).map(p=>`<div class="person"><strong>${esc(p.name||'Boş personel kontenjanı')}</strong><span>Personel No: ${p.id}</span>${p.name?`<button class="btn secondary small" style="margin-top:8px" onclick="renamePerson(${p.id})">Düzenle</button>`:''}</div>`).join('');
+}
+window.renamePerson=function(id){const p=data.people.find(x=>x.id===id);const n=prompt('Personel adı soyadı:',p.name);if(n===null)return;if(!n.trim()){toast('İsim boş bırakılamaz.');return}p.name=n.trim().toLocaleUpperCase('tr-TR');save();toast('Personel güncellendi.')}
+function renderLeaves(){
+ const q=(document.getElementById('leaveSearch').value||'').toLocaleLowerCase('tr-TR'), sf=document.getElementById('statusFilter').value;
+ const items=[...data.leaves].filter(l=>(activeName(l.personId)+' '+l.type).toLocaleLowerCase('tr-TR').includes(q)&&(!sf||l.status===sf)).sort((a,b)=>b.start.localeCompare(a.start));
+ document.getElementById('leaveTable').innerHTML=items.length?`<table><thead><tr><th>Personel</th><th>İzin</th><th>Tarih</th><th>İş günü</th><th>Durum</th><th>İşlemler</th></tr></thead><tbody>${items.map(l=>`<tr><td><strong>${esc(activeName(l.personId))}</strong><br><span class="muted">${esc(l.approver||'')}</span></td><td>${esc(l.type)}<br><span class="muted">${esc(l.notes||'')}</span></td><td>${fmt(l.start)} – ${fmt(l.end)}<br><span class="muted">Dönüş: ${fmt(nextDay(l.end))}</span></td><td>${days(l.start,l.end)}</td><td><span class="badge ${esc(l.status)}">${esc(l.status)}</span></td><td><div class="row" style="min-width:130px"><button class="btn secondary small" onclick="editLeave(${l.id})">Düzenle</button><button class="btn danger small" onclick="deleteLeave(${l.id})">Sil</button></div></td></tr>`).join('')}</tbody></table>`:'<div class="empty">Henüz eşleşen izin kaydı yok.</div>';
+}
+function nextDay(s){if(!s)return '';let d=new Date(s+'T12:00:00');d.setDate(d.getDate()+1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+window.editLeave=function(id){const l=data.leaves.find(x=>x.id===id);if(!l)return;setTab('leaves');document.getElementById('editId').value=l.id;document.getElementById('person').value=l.personId;document.getElementById('type').value=l.type;document.getElementById('start').value=l.start;document.getElementById('end').value=l.end;document.getElementById('status').value=l.status;document.getElementById('approver').value=l.approver||'';document.getElementById('notes').value=l.notes||'';document.getElementById('formTitle').textContent='İzin kaydını düzenle';document.getElementById('saveBtn').textContent='Değişiklikleri kaydet';window.scrollTo({top:0,behavior:'smooth'})}
+window.deleteLeave=function(id){if(!confirm('Bu izin kaydı silinsin mi?'))return;data.leaves=data.leaves.filter(x=>x.id!==id);save();toast('İzin kaydı silindi.')}
+function resetForm(){document.getElementById('leaveForm').reset();document.getElementById('editId').value='';document.getElementById('formTitle').textContent='Yeni izin kaydı';document.getElementById('saveBtn').textContent='İzin kaydını kaydet'}
+document.getElementById('cancelEdit').onclick=resetForm;
+document.getElementById('leaveForm').addEventListener('submit',e=>{e.preventDefault();const personId=document.getElementById('person').value,start=document.getElementById('start').value,end=document.getElementById('end').value;if(!personId){toast('Personel seçin.');return}if(end<start){toast('Bitiş tarihi başlangıçtan önce olamaz.');return}const id=document.getElementById('editId').value;const l={id:id?Number(id):data.nextId++,personId:Number(personId),type:document.getElementById('type').value,start,end,status:document.getElementById('status').value,approver:document.getElementById('approver').value.trim(),notes:document.getElementById('notes').value.trim()};if(id){data.leaves=data.leaves.map(x=>x.id===Number(id)?l:x)}else data.leaves.push(l);save();resetForm();toast('İzin kaydı kaydedildi.')});
+document.getElementById('addPerson').onclick=()=>{const input=document.getElementById('newPerson'),n=input.value.trim();if(!n){toast('Personel adı girin.');return}let blank=data.people.find(p=>!p.name.trim());if(blank)blank.name=n.toLocaleUpperCase('tr-TR');else if(data.people.length<1000)data.people.push({id:Date.now(),name:n.toLocaleUpperCase('tr-TR')});input.value='';save();toast('Personel eklendi.')};
+document.getElementById('personSearch').addEventListener('input',renderPeople);
+document.getElementById('leaveSearch').addEventListener('input',renderLeaves);document.getElementById('statusFilter').addEventListener('change',renderLeaves);
+function renderDash(){document.getElementById('statPeople').textContent=data.people.filter(p=>p.name.trim()).length;document.getElementById('statLeaves').textContent=data.leaves.length;document.getElementById('statPending').textContent=data.leaves.filter(l=>l.status==='Beklemede').length;document.getElementById('statDays').textContent=data.leaves.filter(l=>['Onaylandı','Tamamlandı'].includes(l.status)).reduce((s,l)=>s+days(l.start,l.end),0);const recent=[...data.leaves].sort((a,b)=>b.start.localeCompare(a.start)).slice(0,6);document.getElementById('recent').innerHTML=recent.length?`<div class="table-wrap"><table><thead><tr><th>Personel</th><th>İzin tarihi</th><th>İş günü</th><th>Durum</th></tr></thead><tbody>${recent.map(l=>`<tr><td>${esc(activeName(l.personId))}</td><td>${fmt(l.start)} – ${fmt(l.end)}</td><td>${days(l.start,l.end)}</td><td><span class="badge ${esc(l.status)}">${esc(l.status)}</span></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Henüz izin kaydı eklenmedi.</div>'}
+function renderAll(){renderPeople();renderLeaves();renderDash()}
+document.getElementById('export').onclick=()=>{const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='personel-izin-yedegi-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);toast('Yedek dosyası indirildi.')};
+document.getElementById('importFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(!Array.isArray(d.people)||!Array.isArray(d.leaves))throw Error();if(confirm('Mevcut veriler içe aktarılan yedekle değiştirilsin mi?')){data=d;save();toast('Yedek geri yüklendi.')}}catch{toast('Yedek dosyası okunamadı.')}e.target.value=''});
+document.getElementById('clearAll').onclick=()=>{if(confirm('Tüm izin kayıtları kalıcı olarak silinsin mi? Önce yedek almanız önerilir.')&&confirm('Son onay: tüm izin kayıtları silinecek. Devam edilsin mi?')){data.leaves=[];save();toast('İzin kayıtları silindi.')}};
+renderAll();
+</script>
+</body></html>
