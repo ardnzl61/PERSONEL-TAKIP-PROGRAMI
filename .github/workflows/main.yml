@@ -1,5 +1,4 @@
-```yaml
-name: Android APK Oluştur
+name: Android APK Olustur
 
 on:
   workflow_dispatch:
@@ -10,13 +9,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Projeyi indir
         uses: actions/checkout@v4
 
       - name: Java kur
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
@@ -24,14 +22,16 @@ jobs:
       - name: Android SDK kurulumu
         uses: android-actions/setup-android@v3
 
-      - name: APK oluştur
+      - name: SDK bilesenlerini kur
+        run: sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: APK olustur
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug
 
-      - name: APK dosyasını yükle
+      - name: APK dosyasini yukle
         uses: actions/upload-artifact@v4
         with:
           name: personel-izin-takip-apk
           path: app/build/outputs/apk/debug/app-debug.apk
-```
