@@ -3,7 +3,8 @@ name: Android APK Oluştur
 on:
   workflow_dispatch:
   push:
-    branches: ["main"]
+    branches:
+      - main
 
 jobs:
   build:
@@ -19,7 +20,7 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Android Gradle kurulumu
+      - name: Android SDK kurulumu
         uses: android-actions/setup-android@v3
 
       - name: APK oluştur
